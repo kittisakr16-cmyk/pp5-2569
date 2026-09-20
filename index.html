@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบรายงานผลการพัฒนาคุณภาพผู้เรียน | โรงเรียนวังโพรงพิทยาคม</title>
+
+<!-- Google Fonts: Sarabun (ใกล้เคียง TH Sarabun New มากที่สุดบนเว็บ) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Tailwind CSS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/3.4.1/tailwind.min.js"></script>
+
+<!-- SweetAlert2 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[var(--bg)] text-[var(--text)]">
+
+  <div id="toast-root"></div>
+
+  <div class="app-shell">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="https://img2.pic.in.th/pic/_-removebg-previewd98d6d3aba068e49.png" alt="โลโก้โรงเรียน" class="sidebar-logo" onerror="this.style.display='none'">
+        <div class="sidebar-brand-text">
+          <div class="sidebar-brand-title">ระบบรายงานผล</div>
+          <div class="sidebar-brand-sub">การพัฒนาคุณภาพผู้เรียน</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item is-active" data-page="dashboard">
+          <span class="nav-icon">▤</span><span>แดชบอร์ด</span>
+        </button>
+        <button class="nav-item" data-page="form">
+          <span class="nav-icon">✎</span><span>กรอกรายงานผล</span>
+        </button>
+        <button class="nav-item" data-page="print">
+          <span class="nav-icon">▥</span><span>พิมพ์ ปพ.5 / ดาวน์โหลด</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status">
+          <span id="conn-dot" class="conn-dot"></span>
+          <span id="conn-label">กำลังตรวจสอบการเชื่อมต่อ...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main-area">
+
+      <!-- topbar (mobile menu) -->
+      <div class="topbar">
+        <button id="mobile-menu-btn" class="mobile-menu-btn">☰</button>
+        <div class="topbar-title" id="page-title">แดชบอร์ด</div>
+      </div>
+
+      <!-- ============ PAGE: DASHBOARD ============ -->
+      <section id="page-dashboard" class="page">
+        <div class="page-head">
+          <div>
+            <h1>ภาพรวมการรายงานผล</h1>
+            <p class="text-muted">สรุปข้อมูลรายงานผลการพัฒนาคุณภาพผู้เรียนที่ส่งเข้ามาในระบบ</p>
+          </div>
+          <button class="btn btn-primary" data-page="form">+ กรอกรายงานใหม่</button>
+        </div>
+
+        <div class="stat-grid" id="stat-grid"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>รายงานล่าสุด</h2>
+            <div class="filter-bar">
+              <input type="text" id="f-name" class="input input-sm" placeholder="ค้นหาชื่อวิชา...">
+              <select id="f-level" class="input input-sm"><option value="">ทุกระดับชั้น</option></select>
+              <select id="f-group" class="input input-sm"><option value="">ทุกกลุ่มสาระ</option></select>
+              <select id="f-teacher" class="input input-sm"><option value="">ทุกครูผู้สอน</option></select>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>วันที่บันทึก</th>
+                  <th>ระดับชั้น</th>
+                  <th>รหัสวิชา</th>
+                  <th>ชื่อวิชา</th>
+                  <th>กลุ่มสาระ</th>
+                  <th>ครูผู้สอน</th>
+                  <th>จำนวนนักเรียน</th>
+                  <th class="text-right">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="report-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: FORM ============ -->
+      <section id="page-form" class="page hidden">
+        <div class="page-head">
+          <div>
+            <h1>กรอกแบบรายงานผลการเรียน</h1>
+            <p class="text-muted">เลือกครูผู้สอนเพื่อดึงรายวิชาที่รับผิดชอบ แล้วกรอกผลการประเมินของแต่ละวิชา</p>
+          </div>
+          <button class="btn btn-ghost" data-page="dashboard">← กลับสู่หน้าแรก</button>
+        </div>
+
+        <div class="card">
+          <div class="form-grid-top">
+            <div class="field">
+              <label>ครูผู้สอน</label>
+              <select id="in-teacher" class="input">
+                <option value="">— เลือกครูผู้สอน —</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>ภาคเรียนที่</label>
+              <select id="in-term" class="input">
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>ปีการศึกษา</label>
+              <input type="number" id="in-year" class="input" value="2569">
+            </div>
+          </div>
+          <p class="text-muted text-sm" id="teacher-hint">เลือกครูผู้สอนเพื่อแสดงรายวิชาที่รับผิดชอบโดยอัตโนมัติ</p>
+        </div>
+
+        <div id="subject-rows-wrap"></div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="btn-clear-form">ล้างข้อมูลฟอร์ม</button>
+          <button class="btn btn-primary" id="btn-save-report">บันทึกรายงานทั้งหมด</button>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: PRINT / ปพ.5 ============ -->
+      <section id="page-print" class="page hidden">
+        <div class="page-head">
+          <div>
+            <h1>พิมพ์แบบรายงาน ปพ.5</h1>
+            <p class="text-muted">เลือกรูปแบบการสรุปผล แล้วดาวน์โหลดเป็น PDF ขนาด A4 แนวนอน</p>
+          </div>
+          <button class="btn btn-ghost" data-page="dashboard">← กลับสู่หน้าแรก</button>
+        </div>
+
+        <div class="card">
+          <div class="print-controls">
+            <div class="field">
+              <label>ภาคเรียนที่</label>
+              <select id="pf-term" class="input">
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>ปีการศึกษา</label>
+              <input type="number" id="pf-year" class="input" value="2569">
+            </div>
+            <div class="field">
+              <label>รูปแบบดาวน์โหลด</label>
+              <select id="pf-type" class="input">
+                <option value="1">แบบที่ 1 — ตามครูผู้สอน</option>
+                <option value="2">แบบที่ 2 — ตามรายวิชาในแต่ละระดับชั้น</option>
+                <option value="3">แบบที่ 3 — ตามกลุ่มสาระในแต่ละระดับชั้น</option>
+                <option value="4">แบบที่ 4 — ตามระดับชั้น รวมทุกกลุ่มสาระ</option>
+              </select>
+            </div>
+            <div class="field" id="pf-teacher-field">
+              <label>ครูผู้สอน</label>
+              <select id="pf-teacher" class="input"></select>
+            </div>
+            <div class="field hidden" id="pf-subject-field">
+              <label>รายวิชา</label>
+              <select id="pf-subject" class="input"></select>
+            </div>
+            <div class="field hidden" id="pf-group-field">
+              <label>กลุ่มสาระการเรียนรู้</label>
+              <select id="pf-group" class="input"></select>
+            </div>
+            <div class="field hidden" id="pf-level-field">
+              <label>ระดับชั้น</label>
+              <select id="pf-level" class="input"></select>
+            </div>
+            <button class="btn btn-primary" id="btn-render-report">แสดงตัวอย่าง</button>
+            <button class="btn btn-outline" id="btn-download-pdf">ดาวน์โหลด PDF</button>
+          </div>
+        </div>
+
+        <div id="ppa5-sheet-wrap">
+          <div id="ppa5-sheet" class="ppa5-sheet"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/form.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
